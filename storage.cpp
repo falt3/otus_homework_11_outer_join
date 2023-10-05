@@ -9,6 +9,7 @@ std::string StorageData::insert(const std::string& table, std::size_t id, const 
 {
     if (auto iter = m_tables.find(table); iter != m_tables.end()) 
     {
+        std::unique_lock<std::shared_mutex> lock(iter->second->mutex);
         if (auto it = std::find_if(iter->second->table.begin(), iter->second->table.end(), 
                 [&id](auto& el) { return el.id == id; }); it == iter->second->table.end()) 
         {
@@ -31,6 +32,7 @@ std::string StorageData::truncate(const std::string& table)
 {
     if (auto iter = m_tables.find(table); iter != m_tables.end()) 
     {
+        std::unique_lock<std::shared_mutex> lock(iter->second->mutex);
         iter->second->table.clear();
         return std::string("OK\n");
     }
@@ -41,6 +43,8 @@ std::string StorageData::truncate(const std::string& table)
 std::string StorageData::intersection()
 {
     std::ostringstream sot;
+    std::shared_lock<std::shared_mutex> lockA(m_tables["A"]->mutex);
+    std::shared_lock<std::shared_mutex> lockB(m_tables["B"]->mutex);
     auto it1 = m_tables["A"]->table.cbegin();
     auto it2 = m_tables["B"]->table.cbegin();
     while (it1 != m_tables["A"]->table.cend() && it2 != m_tables["B"]->table.cend()) {
@@ -64,6 +68,10 @@ std::string StorageData::intersection()
 std::string StorageData::symmetric_difference()
 {
     std::ostringstream sot;
+
+    std::shared_lock<std::shared_mutex> lockA(m_tables["A"]->mutex);
+    std::shared_lock<std::shared_mutex> lockB(m_tables["B"]->mutex);
+
     auto it1 = m_tables["A"]->table.cbegin();
     auto it2 = m_tables["B"]->table.cbegin();
     while (it1 != m_tables["A"]->table.cend() && it2 != m_tables["B"]->table.cend()) {
@@ -98,6 +106,7 @@ std::string StorageData::select(const std::string& table)
 {
     if (auto iter = m_tables.find(table); iter != m_tables.end()) 
     {
+        std::shared_lock<std::shared_mutex> lock(iter->second->mutex);
         std::ostringstream sot;
         for (auto& it : iter->second->table) {
             sot << it.id << "," << it.name << std::endl;
@@ -106,4 +115,35 @@ std::string StorageData::select(const std::string& table)
         return sot.str();
     }
     return std::string("ERR no such table\n");
+}
+
+
+std::string StorageData::fill()
+{
+    {
+        std::unique_lock<std::shared_mutex> lockA(m_tables["A"]->mutex);
+
+        m_tables["A"]->table.clear();    
+        m_tables["A"]->table.push_back({0, "lean"});
+        m_tables["A"]->table.push_back({1, "sweater"});
+        m_tables["A"]->table.push_back({2, "frank"});
+        m_tables["A"]->table.push_back({3, "violation"});
+        m_tables["A"]->table.push_back({4, "quality"});
+        m_tables["A"]->table.push_back({5, "precision"});
+        m_tables["A"]->table.push_back({11, "aaaaaaa"});
+    }
+
+    {
+        std::unique_lock<std::shared_mutex> lockB(m_tables["B"]->mutex);
+        
+        m_tables["B"]->table.clear();
+        m_tables["B"]->table.push_back({3, "proposal"});
+        m_tables["B"]->table.push_back({4, "example"});
+        m_tables["B"]->table.push_back({5, "lake"});
+        m_tables["B"]->table.push_back({6, "flour"});
+        m_tables["B"]->table.push_back({7, "wonder"});
+        m_tables["B"]->table.push_back({8, "selection"});
+        m_tables["B"]->table.push_back({11, "bbbbbbb"});
+    }
+    return std::string("OK\n");
 }

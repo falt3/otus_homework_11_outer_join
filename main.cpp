@@ -21,14 +21,13 @@
 
 void server(tcp::acceptor &acceptor, int& countConnection, std::shared_ptr<ServiceStorage> servStor) 
 {
-    // std::cout << "accept\n";
     acceptor.async_accept(
         [&acceptor, &countConnection, servStor] 
         (const boost::system::error_code& err,  tcp::socket socket) {
             if (!err) {
                 ++countConnection;
 
-                /// ожидание завершения соединения
+                // ожидание завершения соединения
                 socket.async_wait(tcp::socket::wait_error, 
                     [&countConnection](const boost::system::error_code& error) {
                         --countConnection;
@@ -39,13 +38,13 @@ void server(tcp::acceptor &acceptor, int& countConnection, std::shared_ptr<Servi
                     }
                 );
 
-                // Новое соединение 
+                /// Новое соединение 
                 const std::shared_ptr<Connection> connection { 
                     new Connection(std::move(socket), servStor) 
                 };
                 servStor->addSubscriber(connection);
 
-                /// Обработчик для динамического блока
+                // Обработчик для динамического блока
                 connection->read();
             }
 
@@ -65,10 +64,9 @@ int main(int argc, const char* argv[])
 
     /// Хранилище данных
     std::shared_ptr<StorageData> storage (new StorageData());
-    /// Обработчики команд
     
+    /// Обработчик команд
     std::shared_ptr<ServiceStorage> serviceStorage (new ServiceStorage(4, storage));
-
 
     /// количество текущих соединений (клиентов)
     int countConnection = 0;   

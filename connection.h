@@ -9,7 +9,6 @@
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
-#include "command.h"
 #include "poolthreads.h"
 #include "observer.h"
 

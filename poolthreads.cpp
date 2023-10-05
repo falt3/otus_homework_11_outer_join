@@ -75,6 +75,12 @@ void ServiceStorage::executeCommand(const std::string& cmdLine)
             }
             else *strRes = "ERR incorrect parameters\n";
         }
+        else if (params[0] == "FILL") {
+            if (params.size() == 1) {
+                *strRes = m_storage->fill();
+            }
+            else *strRes = "ERR incorrect parameters\n";
+        }        
         else 
             *strRes = "ERR there is no such command\n";
     }
