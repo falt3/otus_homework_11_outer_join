@@ -3,6 +3,7 @@
 #include <string>
 #include <iterator>
 
+
 /**
  * @brief Construct a new Service Storage:: Service Storage object
  * 
@@ -59,7 +60,7 @@ void ServiceStorage::worker()
 /**
  * @brief Функция обработки запросов пользователя
  * 
- * @param cmdLine 
+ * @param cmdLine   Запрос
  */
 void ServiceStorage::executeCommand(const std::string& cmdLine)
 {
@@ -126,7 +127,7 @@ void ServiceStorage::executeCommand(const std::string& cmdLine)
 /**
  * @brief Функция регистрации нового запроса пользователя
  * 
- * @param cmdLine 
+ * @param cmdLine   Запрос
  */
 void ServiceStorage::command(std::string&& cmdLine)
 {

@@ -51,7 +51,7 @@ public:
     /**
      * @brief Функция записи данных в сокет
      * 
-     * @param str 
+     * @param str   Сообщение для записи в сокет
      */
     void write(const std::string& str) {
         ba::async_write(m_socket, ba::buffer(str.data(), str.length()), 
@@ -65,8 +65,8 @@ private:
     /**
      * @brief Функция обработки данных получееных из сокета
      * 
-     * @param err 
-     * @param length 
+     * @param err       Ошибка при работе с сокетом
+     * @param length    Длина принятых данных из сокета
      */
     void readyRead(boost::system::error_code err, std::size_t length) {
         if (err) { // закрытие сокета
