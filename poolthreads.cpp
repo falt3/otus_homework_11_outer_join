@@ -3,7 +3,12 @@
 #include <string>
 #include <iterator>
 
-
+/**
+ * @brief Construct a new Service Storage:: Service Storage object
+ * 
+ * @param countThreads  Количество потоков для выполнения запросов 
+ * @param storage       Хранилище данных
+ */
 ServiceStorage::ServiceStorage(int countThreads, std::shared_ptr<StorageData> storage) :
     m_storage(storage)
 {
@@ -13,6 +18,25 @@ ServiceStorage::ServiceStorage(int countThreads, std::shared_ptr<StorageData> st
 }
 
 
+/**
+ * @brief Destroy the Service Storage:: Service Storage object
+ * 
+ */
+ServiceStorage::~ServiceStorage()
+{
+    m_flagExit = 1;
+    m_cv.notify_all();
+
+    for (std::size_t i = 0; i < m_threads.size(); ++i) {;
+        m_threads[i].join();
+    }
+}
+
+
+/**
+ * @brief Функция потока
+ * 
+ */
 void ServiceStorage::worker()
 {
     while(true) {        
@@ -32,6 +56,11 @@ void ServiceStorage::worker()
 }
 
 
+/**
+ * @brief Функция обработки запросов пользователя
+ * 
+ * @param cmdLine 
+ */
 void ServiceStorage::executeCommand(const std::string& cmdLine)
 {
     std::stringstream ss(cmdLine);
@@ -39,15 +68,20 @@ void ServiceStorage::executeCommand(const std::string& cmdLine)
     std::istream_iterator<std::string> end;
     std::vector<std::string> params(begin, end);
 
-    std::cout << std::this_thread::get_id() << " executeCommand: " << params[0] << "\n";
+    // std::cout << std::this_thread::get_id() << " executeCommand: " << params[0] << "\n";
 
     std::shared_ptr<std::string> strRes(new std::string());
 
     if (params.size() > 0) {
         if (params[0] == "INSERT") {
             if (params.size() == 4) {
-                int id = std::stoi(params[2]);
-                *strRes = m_storage->insert(params[1], id, params[3]);
+                try {
+                    int id = std::stoi(params[2]);
+                    *strRes = m_storage->insert(params[1], id, params[3]);
+                }
+                catch (const std::exception &e) {
+                    *strRes = "ERR invalid id\n";
+                }                
             }
             else *strRes = "ERR incorrect parameters\n";
         }
@@ -88,7 +122,12 @@ void ServiceStorage::executeCommand(const std::string& cmdLine)
     notify(strRes);
 }
 
-//-----------------------------------------------------------
+
+/**
+ * @brief Функция регистрации нового запроса пользователя
+ * 
+ * @param cmdLine 
+ */
 void ServiceStorage::command(std::string&& cmdLine)
 {
     std::lock_guard<std::mutex> lock(m_mutex);

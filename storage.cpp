@@ -1,10 +1,16 @@
 #include "storage.h"
 #include <algorithm>
-#include <iostream>
 #include <sstream>
 
 
-
+/**
+ * @brief Функция вставки данных в таблицу
+ * 
+ * @param table     Название таблицы
+ * @param id        Идентификатор 
+ * @param name      Название
+ * @return std::string  Сообщение с результатом выполнения операции
+ */
 std::string StorageData::insert(const std::string& table, std::size_t id, const std::string& name)
 {
     if (auto iter = m_tables.find(table); iter != m_tables.end()) 
@@ -28,6 +34,12 @@ std::string StorageData::insert(const std::string& table, std::size_t id, const 
 }
 
 
+/**
+ * @brief Функция удаления данных из таблицы
+ * 
+ * @param table     Название таблицы
+ * @return std::string  Сообщение с результатом выполнения операции
+ */
 std::string StorageData::truncate(const std::string& table)
 {
     if (auto iter = m_tables.find(table); iter != m_tables.end()) 
@@ -40,6 +52,11 @@ std::string StorageData::truncate(const std::string& table)
 }
 
 
+/**
+ * @brief Функция нахождения пересечения данных таблиц "A" и "B"
+ * 
+ * @return std::string  Сообщение с результатом выполнения операции
+ */
 std::string StorageData::intersection()
 {
     std::ostringstream sot;
@@ -65,6 +82,11 @@ std::string StorageData::intersection()
 }
 
 
+/**
+ * @brief Функция нахождения симметрической разности данных из таблиц "A" и "B"
+ * 
+ * @return std::string  Сообщение с результатом выполнения операции
+ */
 std::string StorageData::symmetric_difference()
 {
     std::ostringstream sot;
@@ -102,6 +124,12 @@ std::string StorageData::symmetric_difference()
 }
 
 
+/**
+ * @brief Функция вывода данных таблицы
+ * 
+ * @param table     Название таблицы
+ * @return std::string  Сообщение с результатом выполнения операции
+ */
 std::string StorageData::select(const std::string& table)
 {
     if (auto iter = m_tables.find(table); iter != m_tables.end()) 
@@ -118,6 +146,11 @@ std::string StorageData::select(const std::string& table)
 }
 
 
+/**
+ * @brief Функция заполнения таблиц тестовыми данными
+ * 
+ * @return std::string Сообщение с результатом выполнения операции
+ */
 std::string StorageData::fill()
 {
     {

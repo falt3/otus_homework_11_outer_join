@@ -12,29 +12,36 @@
 #include <iostream>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/signal_set.hpp>
 
 #include "connection.h"
 #include "storage.h"
 #include "poolthreads.h"
 
 //-----------------------------------------------------------
-
-void server(tcp::acceptor &acceptor, int& countConnection, std::shared_ptr<ServiceStorage> servStor) 
+/**
+ * @brief Функция ожидания подключения и создания нового соединения
+ * 
+ * @param acceptor          Объект ожидающий подключение клиентов
+ * @param countConnections  Текущее количество соединений с клиентами
+ * @param servStor          Хранилище данных
+ */
+void server(tcp::acceptor &acceptor, int& countConnections, std::shared_ptr<ServiceStorage> servStor) 
 {
     acceptor.async_accept(
-        [&acceptor, &countConnection, servStor] 
+        [&acceptor, &countConnections, servStor] 
         (const boost::system::error_code& err,  tcp::socket socket) {
             if (!err) {
-                ++countConnection;
+                ++countConnections;
 
                 // ожидание завершения соединения
                 socket.async_wait(tcp::socket::wait_error, 
-                    [&countConnection](const boost::system::error_code& error) {
-                        --countConnection;
-                        if (error) {
-                            // std::cout << "error: " << error.value() << " " << error.category().name()
-                            //     << " " << error.message() << " " << "\n";
-                        }
+                    [&countConnections](const boost::system::error_code& /*error*/) {
+                        --countConnections;
+                        // if (error) {
+                        //     // std::cout << "error: " << error.value() << " " << error.category().name()
+                        //     //     << " " << error.message() << " " << "\n";
+                        // }
                     }
                 );
 
@@ -44,17 +51,15 @@ void server(tcp::acceptor &acceptor, int& countConnection, std::shared_ptr<Servi
                 };
                 servStor->addSubscriber(connection);
 
-                // Обработчик для динамического блока
                 connection->read();
             }
 
-            server(acceptor, countConnection, servStor);
+            server(acceptor, countConnections, servStor);
         }
     );
 }
 
 //-----------------------------------------------------------
-
 
 int main(int argc, const char* argv[]) 
 {
@@ -69,14 +74,30 @@ int main(int argc, const char* argv[])
     std::shared_ptr<ServiceStorage> serviceStorage (new ServiceStorage(4, storage));
 
     /// количество текущих соединений (клиентов)
-    int countConnection = 0;   
+    int countConnections = 0;   
 
     ba::io_context io_context;
     tcp::acceptor acceptor {io_context, tcp::endpoint(tcp::v4(), port)};
 
-    server(acceptor, countConnection, serviceStorage);
+    server(acceptor, countConnections, serviceStorage);
 
-    io_context.run();    
+    ba::signal_set signals{io_context, SIGINT, SIGTERM};
+    signals.async_wait([&](auto, auto) { 
+        io_context.stop(); 
+    });
+
+    std::vector<std::thread> threads;
+    // const auto nThreads = std::thread::hardware_concurrency();
+    const auto nThreads = 4;
+    threads.reserve(nThreads);
+    for (unsigned int i = 0; i < nThreads; ++i) {
+        threads.emplace_back([&io_context]() { io_context.run(); });
+    }
+    for (auto &th : threads) {
+        th.join();
+    }
+
+    std::cout << std::this_thread::get_id() << " Server stopped." << std::endl;    
 
     return 0;
 }

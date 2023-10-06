@@ -8,6 +8,10 @@
 #include <memory>
 
 
+/**
+ * @brief Класс организующий хранение данных и работу с этими данными
+ * 
+ */
 class StorageData {
 public:
     struct TypeDataTable {
@@ -15,8 +19,8 @@ public:
         std::string name;
     };
     struct Table {
-        std::vector<TypeDataTable> table;
-        std::shared_mutex mutex;
+        std::vector<TypeDataTable> table;   // Таблица с данными
+        std::shared_mutex mutex;            // Мьютекс организующий доступ к данных
     };
     StorageData() { 
         m_tables["A"] = std::unique_ptr<Table>(new Table());

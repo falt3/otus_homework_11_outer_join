@@ -13,10 +13,9 @@ find_package(Boost COMPONENTS
 set(nameApp join_server)
 add_executable(${nameApp} 
     main.cpp
-    connection.cpp
     storage.cpp
     poolthreads.cpp
-    )
+)
 target_link_libraries(${nameApp} ${Boost_LIBRARIES})
 
 

@@ -19,15 +19,28 @@ using tcp = ba::ip::tcp;
 
 //-----------------------------------------------------------
 
+/**
+ * @brief   Класс сетевого соединения с клиентом
+ * 
+ */
 class Connection : public std::enable_shared_from_this<Connection>, public Subscriber<std::string>
 {
 public:
+    /**
+     * @brief Construct a new Connection object
+     * 
+     * @param socket    Сокет
+     * @param servStor  Служба для работы с хранилищем данных
+     */
     Connection (tcp::socket&& socket, std::shared_ptr<ServiceStorage> servStor) : 
         m_socket(std::move(socket)),   
         m_servStor(servStor)
     {}
-    ~Connection () {};
 
+    /**
+     * @brief Функция чтения данных из сокета
+     * 
+     */
     void read() {
         ba::async_read_until(m_socket, m_buffer, "\n",
             [self=shared_from_this()](boost::system::error_code err, std::size_t length) {
@@ -35,16 +48,44 @@ public:
             }   
         );
     }
+    /**
+     * @brief Функция записи данных в сокет
+     * 
+     * @param str 
+     */
     void write(const std::string& str) {
         ba::async_write(m_socket, ba::buffer(str.data(), str.length()), 
             [](boost::system::error_code /*err*/, std::size_t /*length*/) {
-                std::cout << std::this_thread::get_id() << " writen\n";
+                // std::cout << std::this_thread::get_id() << " writen\n";
             }
         );
     }
+
 private:
-    void readyRead(boost::system::error_code err, std::size_t length);
-    void update(std::shared_ptr<std::string>& data);
+    /**
+     * @brief Функция обработки данных получееных из сокета
+     * 
+     * @param err 
+     * @param length 
+     */
+    void readyRead(boost::system::error_code err, std::size_t length) {
+        if (err) { // закрытие сокета
+            return;
+        }
+        if (length > 1) {
+            std::string str {ba::buffer_cast<const char *>(m_buffer.data()), length-1};
+            m_servStor->command(std::move(str));
+        }
+        m_buffer.consume(length);
+        read();
+    }
+
+    /**
+     * @brief Функция получения результирующего сообщения на запрос
+     * 
+     * @param data  Сообщение с результатом выполнения операции
+     */
+    void update(std::shared_ptr<std::string>& data) { write(*data); }
 
     tcp::socket m_socket;
     ba::streambuf m_buffer;
