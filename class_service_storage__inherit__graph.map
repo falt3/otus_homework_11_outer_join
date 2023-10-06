@@ -1,0 +1,4 @@
+<map id="ServiceStorage" name="ServiceStorage">
+<area shape="rect" id="node1" title="Класс организующий многопоточную обработку запросов к хранилищу данных" alt="" coords="27,79,138,104"/>
+<area shape="rect" id="node2" href="$class_publisher.html" title=" " alt="" coords="5,5,160,31"/>
+</map>
